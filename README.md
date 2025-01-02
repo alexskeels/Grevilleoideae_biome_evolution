@@ -3,18 +3,33 @@
  All required datasets can be found in the Zenodo repository XYZ
  
 1. BAMM.R 
-	diversification rate analysis with BAMM in R.
+
+	Diversification rate analysis with BAMM in R.
+	
 2. BAMM_divcontrol.txt 
-	configuration for BAMM.
+
+	Configuration for BAMM.
+	
 3. TESS.R 
-	diversification rate analysis with TESS in R.
+
+	Diversification rate analysis with TESS in R.
+	
 4. CLaDS.jl 
-	diversification rate analysis with CLaDs in Julia.
+
+	Diversification rate analysis with CLaDs in Julia.
+	
 5. PALEOBIOMES.R
+
 	Script to estimate biomes through time in R.
+	
 6. BGB_DEC.R 
+
 	Biogeographic estimation models with dispersal-extirpation-cladiogenesis (DEC) models in BioGeoBEARS package in R.
+	
 7. LTSTR.R
+
 	Lineages through space and time package support functions.
-8. APGLMM
-	ancestral phylogenetic generalized linear mixed models with phyr in R
+	
+8. APGLMM.R
+
+	Ancestral phylogenetic generalized linear mixed models with phyr in R
