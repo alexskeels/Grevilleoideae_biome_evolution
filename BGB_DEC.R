@@ -133,7 +133,7 @@ model <- "timestrat_DEC_s_+w_+n_+x_+j"
 ####---- Biome Table ----####
 
 # read in the biome data
-koppen_pam <- read.csv("Datasets/Dataset_S11_biome_occupancy.csv")
+koppen_pam <- readxl::read_xlsx("Dataset_S3.xlsx", sheet="Biome_Occupancy")
 
 # change colnames to single alphabertical values
 koppen_names <- colnames(koppen_pam)
@@ -367,7 +367,7 @@ plus_j <- TRUE
 
 # get geography and phylogeny paths
 geogfn   <- file.path("Outputs/koppen_regional_geog.txt")
-trfn <- file.path( "Datasets/Dataset_S12_species_level_phylo.tre")
+trfn <- file.path( "Dataset_S10.tre")
 tr <- read.tree(trfn)
 
 # Max range

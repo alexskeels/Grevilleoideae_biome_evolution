@@ -101,7 +101,8 @@ statenames <- c("-","a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k") # vec
 names(statenames) <- 0:11
 
 # probabilities of each state
-probs <- stateProbs(res,  trfn, geogfn, statenames)
+probs <- readxl::read_xlsx("Dataset_S3.xlsx", sheet="Node_Data_Table")
+probs <- probs[,9:238]
 states <- colnames(probs)[apply(probs, 1, which.max)]
 
 # get diversification rate information by branch
@@ -197,7 +198,7 @@ for(i in 1:nrow(rates_df)){
 
 ####---- Standing Diversity ----####
 
-source("Software/LTSTR.R")
+source("LTSTR.R")
 
 # get diversity through time
 # make sure no two nodes have exactly the same height

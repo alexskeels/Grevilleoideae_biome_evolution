@@ -8,7 +8,7 @@ library(coda)
 ####---- Prepare Data ----####
 
 # load tree
-tree <- read.tree("Datasets/Dataset_S12_species_level_phylo.tre")
+tree <- read.tree("Datasets/Dataset_S10.tre")
 
 # sampling fraction of different genera in Grevilleoideae
 sampling_table <-data.frame(table(sapply(tree$tip.label, FUN=function(x)strsplit(x, "_")[[1]][1])))
@@ -137,12 +137,4 @@ best <- getBestShiftConfiguration(edata, expectedNumberOfShifts=1)
 plot.bammdata(best, lwd = 2,logcolor = F , legend=T, spex="netdiv")
 addBAMMshifts(best, cex=2.5)
 axisPhylo()
-
-# get rates through time
-rtt <- getRateThroughTimeMatrix(edata)
-
-meanSRate <- colMeans(rtt$lambda)
-meanERate <- colMeans(rtt$mu)
-plot(meanSRate  ~ rev(rtt$times), type="l", col="red", ylim=c(0,0.1), main="BAMM rates through time", lwd=4)
-lines(meanERate  ~  rev(rtt$times), col="blue", lwd=4)
-            
+          

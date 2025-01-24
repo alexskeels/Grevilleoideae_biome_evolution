@@ -4,7 +4,7 @@ library(ape)
 
 ####---- Tree ----####
 
-trfn <- file.path( "Datasets/Dataset_S12_species_level_phylo.tre")
+trfn <- file.path( "Datasets/Dataset_S10.tre")
 tr <- read.tree(trfn)
 
 ####---- Fit TESS Models ----####
