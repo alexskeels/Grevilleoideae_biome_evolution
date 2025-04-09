@@ -59,11 +59,13 @@ plot_data <- data.frame(
 plot_data <- plot_data[order(plot_data$climate_age),]
 
 ggplot(plot_data, aes(x = climate_age, y = log(climate_richness))) +
-  geom_point(alpha = 0.5) +
+  geom_point(size=2) +
   geom_line(aes(y = GAM_fitted, color = "GAM"), size = 1) +
   geom_line(aes(y = glm_fitted, color = "GLM"), size = 1) +
   scale_color_manual(values = c("GAM" = "blue", "GLM" = "red")) +
-  labs(title = "",x="climate_age (Ma)",
-       y = "log(species climate_richness)", color = "Model") +
+  labs(title = "",x="Climate age (Ma)",
+       y = "Log(species richness)", color = "Model") +
   theme_cowplot(14)+
-  scale_x_reverse()
+  scale_x_reverse()+
+  deeptime::coord_geo( dat = "epochs", abbrv = T,  alpha = .8, fill=c("grey95", "white"))
+
