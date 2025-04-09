@@ -156,11 +156,11 @@ koppenizerLi <- function(year,li_year, clim_rast, scotese){
 
 ####---- DATA ----####
 
-# get Li et al. paleoclimate variables
-clim_rast <- rast(file.path("External_datasets/High_Resolution_Climate_Simulation_Dataset_540_Myr.nc"))
+# get paleoclimate variables Li et al. 2022 Sci Data 9, 371 (2022): https://doi.org/10.1038/s41597-022-01490-4 
+clim_rast <- rast(file.path("High_Resolution_Climate_Simulation_Dataset_540_Myr.nc"))
 
-# get Scotese and Wright (2018) paleoelevations
-scotese <- list.files("External_datasets/PaleoDEMS_long_lat_elev_csv_v2/PaleoDEMS_long_lat_elev_csv_v2.csv/")[1:30]
+# get paleoelevations Scotese and Wright (2018): https://www.earthbyte.org/paleodem-resource-scotese-and-wright-2018/
+scotese <- list.files("PaleoDEMS_long_lat_elev_csv_v2/PaleoDEMS_long_lat_elev_csv_v2.csv/")[1:30]
 
 # index the years we would like to extract from Li et al
 li_years_index <- c(54:41)
@@ -183,11 +183,11 @@ if(run_slow==TRUE){
     koppen_li[[year]] <- koppenizerLi(year, li_years_index[year], clim_rast, scotese[seq(from=1, to=29, by=2)])
   }
   
-  writeRaster(rast(koppen_li), "Outputs/Li_Koppenised.tif", overwrite=T)
+  writeRaster(rast(koppen_li), "Li_Koppenised.tif", overwrite=T)
   
 } else {
   
-  koppen_li <- rast("Outputs/Li_Koppenised.tif")
+  koppen_li <- rast("Li_Koppenised.tif")
 }
 
 
@@ -913,7 +913,7 @@ RegionalPolygons[[6]][["AustraloPapuan_Arid"]]         <- NA
 # Do a final time step based on the Present-day high resolution from Beck
 
 # koppen data
-koppen_083 <- rast("External_datasets/Beck_KG_V1_present_0p083.tif")
+koppen_083 <- rast("Beck_KG_V1_present_0p083.tif")
 
 # as data frame
 koppen_df <- as.data.frame(koppen_083, xy=TRUE)
@@ -1044,3 +1044,12 @@ RegionalPolygons[[7]][["AustraloPapuan_SemiArid"]]     <- AustraloPapuan_poly_se
 RegionalPolygons[[7]][["AustraloPapuan_Mediterranean"]]<- AustraloPapuan_poly_med
 RegionalPolygons[[7]][["AustraloPapuan_Arid"]]         <- AustraloPapuan_poly_arid
 
+
+# paleo-area
+
+
+areas_df <- data.frame(do.call(rbind, lapply(RegionalPolygons, getArea)))
+areas_df$time <- seq(from=120, to=0, by=-10)
+area_df_melt <- melt(areas_df, id="time")
+
+write.csv(area_df_melt, "biome_paleoarea.csv")

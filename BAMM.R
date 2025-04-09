@@ -8,7 +8,7 @@ library(coda)
 ####---- Prepare Data ----####
 
 # load tree
-tree <- read.tree("Datasets/Dataset_S10.tre")
+tree <- read.tree("Dataset_S10.tree")
 
 # sampling fraction of different genera in Grevilleoideae
 sampling_table <-data.frame(table(sapply(tree$tip.label, FUN=function(x)strsplit(x, "_")[[1]][1])))
@@ -71,7 +71,7 @@ for(i in 1:nrow(sampling_table)){
 }
 
 # save file in format for CLaDS model
-write.table(f, file="Outputs/CLaDS_sampling_fraction_vector.txt", col.names = F, row.names = F)
+write.table(f, file="sampling_fraction_vector.txt", col.names = F, row.names = F)
 
 # species level sampling fractions table for BAMM
 species_sampling_table <- data.frame(speciesName =tree$tip.label, cladeName=NA, samplingFraction=NA)
@@ -79,10 +79,10 @@ for(i in 1:nrow(sampling_table)){
   species_sampling_table$samplingFraction[which(grepl(sampling_table$genus[i], tree$tip.label))] <- sampling_table$sampling_fraction[i]
   species_sampling_table$cladeName[which(grepl(sampling_table$genus[i], tree$tip.label))] <- sampling_table$genus[i]
 }
-write.table(species_sampling_table, file="Outputs/BAMM_sampling_fraction_table.txt", col.names=T, row.names = F)
+write.table(species_sampling_table, file="BAMM_sampling_fraction_table.txt", col.names=T, row.names = F)
 
 # estimate priors
-setBAMMpriors(tree, outfile="Outputs/BAMM_priors.txt")
+setBAMMpriors(tree, outfile="BAMM_priors.txt")
 
 # run "Software/divcontrol.txt" in cmd line - e.g., 
   #cd bamm-2.5.0-Windows\bamm-2.5.0-Windows
@@ -92,8 +92,8 @@ setBAMMpriors(tree, outfile="Outputs/BAMM_priors.txt")
 
 # analyse results with bamm tools
 # load events and MCMC chain
-edata <- getEventData(tree, eventdata = "Outputs/BAMM_event_data.txt", burnin=0.15)
-mcmcout <- read.csv("Outputs/BAMM_mcmc_out.txt", header=T)
+edata <- getEventData(tree, eventdata = "BAMM_event_data.txt", burnin=0.15)
+mcmcout <- read.csv("BAMM_mcmc_out.txt", header=T)
 
 # look at chains
 plot(mcmcout$logLik ~ mcmcout$generation)
@@ -110,14 +110,14 @@ effectiveSize(postburn$logLik) # yes
 effectiveSize(postburn$eventRate) # yes
 
 # write posterior
-write.csv(postburn, file="Outputs/BAMM_posterior.csv")
+write.csv(postburn, file="BAMM_posterior.csv")
 
 # now see how many rate shifts
 post_probs <- table(postburn$N_shifts) / nrow(postburn)
 names(post_probs)
 shift_probs <- summary(edata)
 
-postfile <- "Outputs/BAMM_mcmc_out.txt"
+postfile <- "BAMM_mcmc_out.txt"
 
 # compare prior and posterior - clearly rejects prior
 plotPrior(postburn , expectedNumberOfShifts=2)

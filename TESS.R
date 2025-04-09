@@ -4,7 +4,7 @@ library(ape)
 
 ####---- Tree ----####
 
-trfn <- file.path( "Datasets/Dataset_S10.tre")
+trfn <- file.path( "Dataset_S10.tree")
 tr <- read.tree(trfn)
 
 ####---- Fit TESS Models ----####
@@ -32,27 +32,6 @@ likelihoodConstBD <- function(params) {
 }
 
 
-### --- CONTINUOUSLY VARIABLE RATE --- ###
-
-prior_delta <- function(x) { dexp(x,rate=0.1,log=TRUE) }
-prior_lambda <- function(x) { dexp(x,rate=10.0,log=TRUE) }
-prior_alpha <- function(x) { dexp(x,rate=0.1,log=TRUE) }
-priorsDecrBD <- c("turnover"=prior_delta,
-                  "initial speciation"=prior_lambda,
-                  "speciation decay"=prior_alpha)
-
-likelihoodDecrBD <- function(params) {
-  speciation <- function(t) params[1] + params[2] * exp(-params[3]*t)
-  extinction <- function(t) params[1]
-  lnl <- tess.likelihood(times,
-                         lambda = speciation,
-                         mu = extinction,
-                         samplingProbability = samplingFraction,
-                         samplingStrategy = "uniform",
-                         log = TRUE)
-  return (lnl)
-}
-
 ### --- EPISODICALLY VARYING RATES --- ###
 
 prior_delta_before <- function(x) { dexp(x,rate=10.0,log=TRUE) }
@@ -64,6 +43,7 @@ priorsEpisodicBD <- c("diversification before"=prior_delta_before,
                       "diversification after"=prior_delta_after,
                       "turnover after"=prior_tau_after)
 
+rateChangeTime <- 45 # 45 Ma
 
 likelihoodEpisodicBD <- function(params) {
   speciation <- c(params[1]+params[2],params[3]+params[4])
@@ -82,11 +62,11 @@ likelihoodEpisodicBD <- function(params) {
 
 ### --- MASS EXTINCTION EVENT --- ###
 
-survivalProbability <- 0.2
+survivalProbability <- 0.25
 
 prior_delta <- function(x) { dexp(x,rate=10.0,log=TRUE) }
 prior_tau <- function(x) { dexp(x,rate=10.0,log=TRUE) }
-prior_time <- function(x) { dunif(x,min=max(times)/2,max=max(times),log=TRUE)}
+prior_time <- function(x) { dunif(x,min=30,max=70,log=TRUE)}
 priorsMassExtinctionBD <- c("diversification"=prior_delta,
                             "turnover"=prior_tau,
                             "mass-extinction time"=prior_time)
@@ -124,18 +104,6 @@ if(fit_models == TRUE){
                               thinning = 10,
                               adaptive = TRUE,
                               verbose = TRUE)
-
-  set.seed(12345)
-  samplesDecrBD <- tess.mcmc(likelihoodFunction = likelihoodDecrBD,
-                             priors = priorsDecrBD,
-                             parameters = runif(3,0,1),
-                             logTransforms = c(TRUE,TRUE,TRUE),
-                             delta = c(1,1,1),
-                             iterations = 10000,
-                             burnin = 1000,
-                             thinning = 10,
-                             adaptive = TRUE,
-                             verbose = TRUE)
 
   set.seed(12345)
   samplesEpisodicBD <- tess.mcmc(likelihoodFunction = likelihoodEpisodicBD,
@@ -176,15 +144,6 @@ marginalLikelihoodConstBD <- tess.steppingStoneSampling(
   burnin = 100,
   K = 50)
 
-marginalLikelihoodDecrBD <- tess.steppingStoneSampling(
-  likelihoodFunction = likelihoodDecrBD,
-  priors = priorsDecrBD,
-  parameters = runif(3,0,1),
-  logTransforms = c(TRUE,TRUE,TRUE),
-  iterations = 1000,
-  burnin = 100,
-  K = 50)
-
 marginalLikelihoodEpisodicBD <- tess.steppingStoneSampling(
   likelihoodFunction = likelihoodEpisodicBD,
   priors = priorsEpisodicBD,
@@ -205,7 +164,6 @@ marginalLikelihoodMassExtinctionBD <- tess.steppingStoneSampling(
 
 # compare fits
 candidateModels <- c("ConstBD"=marginalLikelihoodConstBD,
-                     "DecrBD"=marginalLikelihoodDecrBD,
                      "EpisodicBD"=marginalLikelihoodEpisodicBD,
                      "MassExtinctionBD"=marginalLikelihoodMassExtinctionBD)
 
@@ -221,77 +179,3 @@ marginalLikelihoodGrid$BF <- 2 * (candidateModels[marginalLikelihoodGrid$M0] -
 marginalLikelihoodGrid <- marginalLikelihoodGrid[order(marginalLikelihoodGrid$BF,
                                                        decreasing=TRUE),]
 marginalLikelihoodGrid
-
-####---- Model Selection with CoMET ----####
-
-# Priors
-# number of expected mass extinctions
-numExpectedMassExtinctions <- 1
-
-# number of expected rate shifts
-numExpectedRateChanges <- 2 # based on BAMM
-
-# Specify the mean and standard deviation of the lognormal
-# prior on the speciation rate in real space
-speciationPriorMu <- 0.2
-speciationPriorSigma <- 0.5
-
-# Specify the mean and standard deviation of the lognormal
-# prior on the extinction rate in real space
-extinctionPriorMu <- 0.15
-extinctionPriorSigma <- 0.5
-
-# Transform the priors on the speciation rate into log space.
-speciationRatePriorMean <- log((speciationPriorMu^2)/sqrt(speciationPriorSigma^2+ speciationPriorMu^2))
-speciationRatePriorStDev <- sqrt( log(1+speciationPriorSigma^2 /(speciationPriorMu^2)))
-
-# Transform the priors on the extinction rate into log space.
-extinctionRatePriorMean <- log((extinctionPriorMu^2) /sqrt(extinctionPriorSigma^2+ extinctionPriorMu^2))
-extinctionRatePriorStDev <- sqrt( log(1+extinctionPriorSigma^2 /(extinctionPriorMu^2)))
-
-# Survival probability in Mass extinction
-expectedSurvivalProbability <- 0.2
-pMassExtinctionPriorShape2 <- 100
-pMassExtinctionPriorShape1 <- - pMassExtinctionPriorShape2 *expectedSurvivalProbability /(expectedSurvivalProbability - 1)
-
-# Run CoMET
-setwd("Outputs")
-set.seed(666)
-tess.analysis(tr,
-              empiricalHyperPriors = FALSE,
-              initialSpeciationRate = speciationPriorMu,
-              speciationRatePriorMean = speciationRatePriorMean,
-              speciationRatePriorStDev = speciationRatePriorStDev,
-              initialExtinctionRate = extinctionPriorMu,
-              extinctionRatePriorMean = extinctionRatePriorMean,
-              extinctionRatePriorStDev = extinctionRatePriorStDev,
-              samplingProbability = samplingFraction,
-              numExpectedRateChanges = numExpectedRateChanges,
-              numExpectedMassExtinctions = numExpectedMassExtinctions,
-              pMassExtinctionPriorShape1 = pMassExtinctionPriorShape1,
-              pMassExtinctionPriorShape2 = pMassExtinctionPriorShape2,
-              MAX_ITERATIONS = 10000,
-              dir = "tess_analysis")
-
-# Process CoMET output
-output <- tess.process.output("tess_analysis",
-                              numExpectedRateChanges = numExpectedRateChanges,
-                              numExpectedMassExtinctions = numExpectedMassExtinctions)
-
-####---- Plot CoMET ----####
-
-# layoput matrix
-layout.mat <- matrix(1:9,nrow=3,ncol=3,byrow=TRUE)
-layout(layout.mat)
-
-# plot
-tess.plot.output(output,fig.types = c("speciation Bayes factors",
-                               "speciation shift times",
-                               "speciation rates",
-                               "extinction Bayes factors",
-                               "extinction shift times",
-                               "extinction rates",
-                               "mass extinction Bayes factors",
-                               "mass extinction times",
-                               "net-diversification rates"),las=2)
-

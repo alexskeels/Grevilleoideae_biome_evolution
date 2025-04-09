@@ -1,6 +1,7 @@
 # Grevilleoideae_biome_evolution
  Scripts for biogeographic and diversification analyses for Skeels et al. "Paleo-biome dynamics shaped a large Gondwanan plant radiation"
- All required datasets can be found in the Zenodo repository XYZ
+ 
+Required datasets can be found in the Zenodo repository "Dataset for "Paleo-biome dynamics shaped a large Gondwanan plant radiation"" DOI: 10.5281/zenodo.14743850
  
 1. BAMM.R 
 

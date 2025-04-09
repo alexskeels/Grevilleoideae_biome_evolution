@@ -119,7 +119,6 @@ connectivityMatrix <- function(x, high, medium, low){
   return(new_x)
 }
 
-
 ####---- Model Name ----####
 
 # name model
@@ -128,6 +127,8 @@ connectivityMatrix <- function(x, high, medium, low){
 # +x geographic distance weights
 # +j jump dispersal speciation
 # s state space modified
+
+# name the model
 model <- "timestrat_DEC_s_+w_+n_+x_+j"
 
 ####---- Biome Table ----####
@@ -138,6 +139,7 @@ koppen_pam <- readxl::read_xlsx("Dataset_S3.xlsx", sheet="Biome_Occupancy")
 # change colnames to single alphabertical values
 koppen_names <- colnames(koppen_pam)
 colnames(koppen_pam) <- c("species", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k")
+
 # set rownames
 rownames(koppen_pam) <- koppen_pam$species
 koppen_pam <- koppen_pam[, 2:ncol(koppen_pam)]
@@ -151,7 +153,7 @@ koppen_mat[which(koppen_mat > 0.1)] <- 1
 bgb_header_txt <- c(nrow(koppen_mat), length(which(colSums(koppen_mat)>0)), paste("(",paste(colnames(koppen_mat), collapse=" "), ")", sep=""))
 bgb_column_txt <- matrix(apply(koppen_mat, MARGIN=1, FUN=function(x){paste(x[1:length(x)], collapse="")}), ncol=1)
 rownames( bgb_column_txt) <- rownames(koppen_mat)
-write.table( bgb_column_txt, file="Outputs/koppen_regional_geog.txt", col.names=c(paste(bgb_header_txt, collapse="\t")), row.names=T, sep="\t",quote = FALSE, append=T)
+write.table( bgb_column_txt, file="koppen_regional_geog.txt", col.names=c(paste(bgb_header_txt, collapse="\t")), row.names=T, sep="\t",quote = FALSE, append=T)
 
 ####---- Ranges List ----####
 
@@ -197,18 +199,19 @@ ranges_list  <- list(states_000, states_020,
 
 # 20 Ma intervals from 120 - 0 (we don';'t include 0 explicitly in this object however)
 timeperiods <- matrix(seq(from=20, to=120, by=20), ncol=1)
-write.table(timeperiods,"Outputs/timeperiods_table_120Ma.txt", row.names=F,col.names=F, sep="\t", quote = FALSE)
+write.table(timeperiods,"timeperiods_table_120Ma.txt", row.names=F,col.names=F, sep="\t", quote = FALSE)
 
 ####----Environmental Distances ----####
 
-# koppen data from Beck et al 
-koppen <- rast("External_datasets/Beck_KG_V1_present_0p5.tif")
+# koppen data from Beck et al. 2018, Sci Data 5, 180214 (https://doi.org/10.1038/sdata.2018.214) 
+koppen <- rast("Beck_KG_V1_present_0p5.tif")
 
-# climate data from CHELSA
-chelsa <- rast("External_datasets/chelsa_stack.tif")
+# climate data from CHELSA: Karger, et al.  Sci Data 4, 170122 (2017). https://doi.org/10.1038/sdata.2017.122
+# truned into a raster stack
+chelsa <- rast("chelsa_stack.tif")
 
 # get distribution of species present in the phylogeny
-richness <- rast("External_datasets/Grevilleoideae_richness_phylospecies.tif")
+richness <- rast("Grevilleoideae_richness_phylospecies.tif")
 richness <- resample(richness , koppen)
 
 # combine
@@ -268,25 +271,25 @@ colnames(enviro_dist) <- NULL
 rownames(enviro_dist) <- NULL
 
 # Non-time-stratified dists
-write.table(enviro_dist,"Outputs/environmental_distances_table.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"),sep="\t", row.names=F, quote = FALSE)
-write.table("","Outputs/environmental_distances_table.txt",append=T, col.names=F,sep="\t", row.names=F, quote = FALSE)
-write.table("END","Outputs/environmental_distances_table.txt",append=T, col.names=F,sep="\t", row.names=F, quote = FALSE)
+write.table(enviro_dist,"environmental_distances_table.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"),sep="\t", row.names=F, quote = FALSE)
+write.table("","environmental_distances_table.txt",append=T, col.names=F,sep="\t", row.names=F, quote = FALSE)
+write.table("END","environmental_distances_table.txt",append=T, col.names=F,sep="\t", row.names=F, quote = FALSE)
 
 # Time-stratified 120 Ma (here, we just assume the distances remain the same at each timestep)
-file.remove("Outputs/environmental_distances_table_timestratified_120Ma.txt")
-write.table(enviro_dist,"Outputs/environmental_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), sep="\t",row.names=F,  quote = FALSE)
+file.remove("environmental_distances_table_timestratified_120Ma.txt")
+write.table(enviro_dist,"environmental_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), sep="\t",row.names=F,  quote = FALSE)
 for(i in 1:6){
-  write.table(" ","Outputs/environmental_distances_table_timestratified_120Ma.txt", col.names=F, append=T,row.names=F, sep="\t", quote = FALSE)
-  write.table(enviro_dist,"Outputs/environmental_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"),append=T, row.names=F, sep="\t", quote = FALSE)
+  write.table(" ","environmental_distances_table_timestratified_120Ma.txt", col.names=F, append=T,row.names=F, sep="\t", quote = FALSE)
+  write.table(enviro_dist,"environmental_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"),append=T, row.names=F, sep="\t", quote = FALSE)
 }
-write.table("","Outputs/environmental_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
-write.table("END","Outputs/environmental_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table("","environmental_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table("END","environmental_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
 
 ####---- Geographic Distances ----####
 
 # load in the paleobiome rasters and polygons of each region
 # this takes a few minutes to load
-source("Software/PALEOBIOMES.R")
+source("PALEOBIOMES.R")
 
 # merge Polar Sth America / Antarctica as they were connected
 geo_dists_120MA <- getGeoDistances(RegionalPolygons[[1]], mergeSthAmericaAntarctica=TRUE)
@@ -299,34 +302,34 @@ geo_dists_000MA <- getGeoDistances(RegionalPolygons[[7]], mergeSthAmericaAntarct
 
 
 # Non Time-Stratified Geographic Distances
-file.remove("Outputs/geographic_distances_table.txt")
+file.remove("geographic_distances_table.txt")
 geo_dists_000MA <- scaleBGBDistanceMatrix(geo_dists_000MA)
-write.table(geo_dists_000MA,"Outputs/geographic_distances_table.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=F,row.names=F, sep="\t", quote = FALSE)
-write.table("","Outputs/geographic_distances_table.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
-write.table("END","Outputs/geographic_distances_table.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table(geo_dists_000MA,"geographic_distances_table.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=F,row.names=F, sep="\t", quote = FALSE)
+write.table("","geographic_distances_table.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table("END","geographic_distances_table.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
 
 # Time Stratified Geographic Distances
-file.remove("Outputs/geographic_distances_table_timestratified_120Ma.txt")
-write.table(geo_dists_000MA,"Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=F,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/geographic_distances_table_timestratified_120Ma.txt", append=T, col.names=F,row.names=F, sep="\t", quote = FALSE)
+file.remove("geographic_distances_table_timestratified_120Ma.txt")
+write.table(geo_dists_000MA,"geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=F,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","geographic_distances_table_timestratified_120Ma.txt", append=T, col.names=F,row.names=F, sep="\t", quote = FALSE)
 geo_dists_020MA <- scaleBGBDistanceMatrix(geo_dists_020MA)
-write.table(geo_dists_020MA,"Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(geo_dists_020MA,"geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
 geo_dists_040MA <- scaleBGBDistanceMatrix(geo_dists_040MA)
-write.table(geo_dists_040MA,"Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(geo_dists_040MA,"geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
 geo_dists_060MA <- scaleBGBDistanceMatrix(geo_dists_060MA)
-write.table(geo_dists_060MA,"Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(geo_dists_060MA,"geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
 geo_dists_080MA <- scaleBGBDistanceMatrix(geo_dists_080MA)
-write.table(geo_dists_080MA,"Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(geo_dists_080MA,"geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
 geo_dists_100MA <- scaleBGBDistanceMatrix(geo_dists_100MA)
-write.table(geo_dists_100MA,"Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(geo_dists_100MA,"geographic_distances_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","geographic_distances_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
 
-write.table("","Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
-write.table("END","Outputs/geographic_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table("","geographic_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table("END","geographic_distances_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
 
 ####---- Connectivity Matrices ----####
 
@@ -339,21 +342,21 @@ disp_probs_040MA <- connectivityMatrix(getGeoDistances(RegionalPolygons[[5]], me
 disp_probs_020MA <- connectivityMatrix(getGeoDistances(RegionalPolygons[[6]], mergeSthAmericaAntarctica=FALSE), high=1, medium=0.75, low=0.25)
 disp_probs_000MA <- connectivityMatrix(getGeoDistances(RegionalPolygons[[7]], mergeSthAmericaAntarctica=FALSE), high=1, medium=0.75, low=0.25)
 
-file.remove("Outputs/connectivity_table_timestratified_120Ma.txt")
-write.table(disp_probs_000MA,"Outputs/connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=F,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/connectivity_table_timestratified_120Ma.txt", append=T, col.names=F,row.names=F, sep="\t", quote = FALSE)
-write.table(disp_probs_020MA,"Outputs/connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
-write.table(disp_probs_040MA,"Outputs/connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
-write.table(disp_probs_060MA,"Outputs/connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
-write.table(disp_probs_080MA,"Outputs/connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
-write.table(disp_probs_100MA,"Outputs/connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
-write.table(" ","Outputs/connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
-write.table("","Outputs/connectivity_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
-write.table("END","Outputs/connectivity_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+file.remove("connectivity_table_timestratified_120Ma.txt")
+write.table(disp_probs_000MA,"connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=F,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","connectivity_table_timestratified_120Ma.txt", append=T, col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(disp_probs_020MA,"connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(disp_probs_040MA,"connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(disp_probs_060MA,"connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(disp_probs_080MA,"connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table(disp_probs_100MA,"connectivity_table_timestratified_120Ma.txt", col.names=c("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k"), append=T,row.names=F, sep="\t", quote = FALSE)
+write.table(" ","connectivity_table_timestratified_120Ma.txt", append=T,col.names=F,row.names=F, sep="\t", quote = FALSE)
+write.table("","connectivity_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
+write.table("END","connectivity_table_timestratified_120Ma.txt", col.names=F,append=T,sep="\t", row.names=F, quote = FALSE)
 
 
 ####---- Run a time-stratified DEC on modified Koppen-Geiger biomes with Modified States Space  ----####
@@ -366,7 +369,7 @@ plus_x <- TRUE
 plus_j <- TRUE
 
 # get geography and phylogeny paths
-geogfn   <- file.path("Outputs/koppen_regional_geog.txt")
+geogfn   <- file.path("koppen_regional_geog.txt")
 trfn <- file.path( "Dataset_S10.tre")
 tr <- read.tree(trfn)
 
@@ -407,23 +410,23 @@ BioGeoBEARS_run_object$trfn = trfn
 
 if(time_stratified == TRUE){
   # Set up a time-stratified analysis
-  BioGeoBEARS_run_object$timesfn = "Outputs/timeperiods_table_120Ma.txt"
+  BioGeoBEARS_run_object$timesfn = "timeperiods_table_120Ma.txt"
   
 }
 
 if(time_stratified == TRUE & plus_w == TRUE){
   # add dispersal probability multipliers
-  BioGeoBEARS_run_object$dispersal_multipliers_fn = "Outputs/connectivity_table_timestratified_120Ma.txt"
+  BioGeoBEARS_run_object$dispersal_multipliers_fn = "connectivity_table_timestratified_120Ma.txt"
 }
 
 if(time_stratified == TRUE & plus_x == TRUE){
   # add geographic distances
-  BioGeoBEARS_run_object$distsfn = "Outputs/geographic_distances_table_timestratified_120Ma.txt"
+  BioGeoBEARS_run_object$distsfn = "geographic_distances_table_timestratified_120Ma.txt"
 }
 
 if(time_stratified == TRUE & plus_n == TRUE){
   # add environmental distances
-  BioGeoBEARS_run_object$envdistsfn = "Outputs/environmental_distances_table_timestratified_120Ma.txt"
+  BioGeoBEARS_run_object$envdistsfn = "environmental_distances_table_timestratified_120Ma.txt"
 }
 
 # This function loads the dispersal multiplier matrix etc. from the text files into the model object. Required for these to work!
@@ -464,7 +467,7 @@ if(plus_j == TRUE){
 check_BioGeoBEARS_run(BioGeoBEARS_run_object)
 
 # set output path
-resfn = paste0("Outputs/", model,"/", model, ".Rdata")
+resfn = paste0("", model,"/", model, ".Rdata")
 
 #  Run the analysis
 res = try(bears_optim_run(BioGeoBEARS_run_object))
@@ -474,13 +477,13 @@ save(res, file=resfn)
 ####---- Stochastic Mapping ----####
 
 #  Run the analysis
-BSM_inputs_fn = paste0("Outputs/", model,"/", model, "_BSM_inputs_file.Rdata") 
+BSM_inputs_fn = paste0("", model,"/", model, "_BSM_inputs_file.Rdata") 
 stochastic_mapping_inputs_list = get_inputs_for_stochastic_mapping(res=res)
 save(stochastic_mapping_inputs_list, file=BSM_inputs_fn)
 
 # Run mapping
 BSM_output = runBSM(res, stochastic_mapping_inputs_list=stochastic_mapping_inputs_list, 
-                    savedir = paste0("Outputs/", model),
+                    savedir = paste0("", model),
                     maxnum_maps_to_try=100, 
                     nummaps_goal=50, 
                     maxtries_per_branch=40000, 
