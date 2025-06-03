@@ -15,6 +15,7 @@ library(INLA)
 library(ggplot2)
 library(cowplot)
 library(ape)
+library(dplyr)
 
 ####---- Functions ----####
 
@@ -28,12 +29,13 @@ data_phyr <- readxl::read_xlsx("Dataset_S3.xlsx", sheet="Node Data Table")
 
 # scale and center
 data_phyr$area <- log(data_phyr$area + 1)
-data_phyr$diversity <- log(data_phyr$diversity)
+data_phyr$sympatric_species_richness <- log(data_phyr$sympatric_species_richness)
 data_phyr$rates <- log(data_phyr$rates)
-data_phyr$biome_age <- data_phyr$biome_age
+data_phyr$node_tip <- ifelse(data_phyr$node_type == "tip", 1, 0)
 
 
-data_phyr[, c(7:11)] <- scale(data_phyr[, c(7:11)])
+
+data_phyr[, c(6:9, 11)] <- scale(data_phyr[, c(6:9, 11)])
 
 p1 <- ggplot(data_phyr, aes(y=rates, x=as.factor(biome_shift), fill=node_type))+
   geom_boxplot(alpha=0.7)+
@@ -44,12 +46,12 @@ p2 <- ggplot(data_phyr, aes(y=rates, x=area))+
   geom_smooth(method="lm")+
   theme_cowplot(14)
 
-p3 <- ggplot(data_phyr, aes(y=rates, x=biome_age))+
+p3 <- ggplot(data_phyr, aes(y=rates, x=occupation_time))+
   geom_point(alpha=0.7, mapping=aes(colour=node_type))+
   geom_smooth(method="lm")+
   theme_cowplot(14)
 
-p4 <- ggplot(data_phyr, aes(y=rates, x=diversity))+
+p4 <- ggplot(data_phyr, aes(y=rates, x=sympatric_species_richness))+
   geom_point(alpha=0.7, mapping=aes(colour=node_type))+
   geom_smooth(method="lm")+
   theme_cowplot(14)
@@ -59,9 +61,9 @@ cowplot::plot_grid(p1, p2, p3, p4)
 ## we calculate an unbiased estimate of the brownian motion evolutionary rate
 ## on model residuals, which we base a weakly informative prior on.
 model_formula_m1 <- formula(rates ~   area +
-                              biome_age + 
+                              occupation_time + 
                               biome_shift+
-                              diversity)
+                              sympatric_species_richness + time_bp + node_tip)
 lm1 <- lm(model_formula_m1, data=data_phyr)
 summary(lm1 )
 
@@ -73,6 +75,15 @@ anova(lm0, lm1)
 
 # read tree in
 tree <- read.tree("Dataset_S10.tree")
+
+data_phyr$label[is.na(data_phyr$label)] <- tree$node.label[data_phyr$node[is.na(data_phyr$label)] - tree$Nnode - 1]
+data_phyr$phy <- data_phyr$label
+
+## remove root node which has no data and is not in the ancestral phylogenetic covariance
+## matrix. phyr doesn't let you use any data with labels not in the covariance, to reduce
+## the chance of errors
+data_phyr <- data_phyr %>%
+  filter(node != 694)
 
 pic_df <- tibble(label = tree$tip.label) %>% 
   left_join(data_phyr)
@@ -109,9 +120,9 @@ rates_model_m0_1 <- pglmm(rates  ~ 1 +
 
 rates_model_m1_1 <- pglmm(rates ~ 
                             area +
-                            biome_age + 
+                            occupation_time + 
                             biome_shift +
-                            diversity +  (1 | phy__), 
+                            sympatric_species_richness + time_bp + node_tip + (1 | phy__), 
                           cov_ranef = list(phy = tree),
                           ancestral = "phy",
                           data = data_phyr,
@@ -126,4 +137,43 @@ rates_model_m1_1 <- pglmm(rates ~
 # which model is best?
 BF(rates_model_m1_1, rates_model_m0_1)
 
+plot_bayes(rates_model_m1_1)
 
+
+# sensistivity test: presented in Appendix S1
+
+# compare two similar model. 1 with node+tip, once with tip-only. Keep only shared rpedictors.
+
+rates_model_m2 <- pglmm(rates ~ 
+                          area +
+                          occupation_time + 
+                          biome_shift +
+                          sympatric_species_richness +  (1 | phy__), 
+                        cov_ranef = list(phy = tree),
+                        ancestral = "phy",
+                        data = data_phyr,
+                        prior = "pc.prior",
+                        prior_mu = sdres_rates_m1,
+                        prior_alpha = 0.01,
+                        verbatim_mode = TRUE,
+                        bayes = TRUE)
+
+rates_model_m2_tip <- pglmm(rates ~ 
+                              area +
+                              occupation_time + 
+                              biome_shift +
+                              sympatric_species_richness + (1 | phy__), 
+                            cov_ranef = list(phy = tree),
+                            #ancestral = "phy",
+                            data = data_phyr[which(data_phyr$node_type=="tip"),],
+                            prior = "pc.prior",
+                            prior_mu = sdres_rates_m1,
+                            prior_alpha = 0.01,
+                            verbatim_mode = TRUE,
+                            bayes = TRUE)
+
+# fig S12
+
+plot_bayes(rates_model_m2)
+
+plot_bayes(rates_model_m2_tip)
